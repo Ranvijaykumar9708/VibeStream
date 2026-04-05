@@ -12,7 +12,6 @@ import '../../../services/download/download_service.dart';
 import '../../common_widgets/mini_player.dart';
 import '../../common_widgets/song_artwork.dart';
 import '../../common_widgets/glass_container.dart';
-import '../../common_widgets/song_palette_builder.dart';
 import '../../providers/music_providers.dart';
 import '../player/music_player_screen.dart';
 import '../player/youtube_player_screen.dart';
@@ -52,7 +51,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref.watch(favoritesProvider).asData?.value ?? const <String>{};
     final recentSongs = ref.watch(recentSongsProvider);
     final youtubeResults = ref.watch(youtubeSearchProvider(_searchQuery));
-    final audioState = ref.watch(audioStateProvider);
     final localTrackCount = library.asData?.value.length ?? 0;
     final recentCount = recentSongs.asData?.value.length ?? 0;
 
@@ -141,13 +139,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           color: Colors.white.withValues(alpha: 0.45),
                           fontWeight: FontWeight.w500,
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      _HeroPanel(
-                        audioState: audioState,
-                        localTrackCount: localTrackCount,
-                        favoritesCount: favorites.length,
-                        recentCount: recentCount,
                       ),
                       const SizedBox(height: 18),
                       // Stats Row
@@ -675,270 +666,6 @@ class _StatsRow extends StatelessWidget {
   }
 }
 
-class _HeroPanel extends StatelessWidget {
-  const _HeroPanel({
-    required this.audioState,
-    required this.localTrackCount,
-    required this.favoritesCount,
-    required this.recentCount,
-  });
-
-  final AudioState audioState;
-  final int localTrackCount;
-  final int favoritesCount;
-  final int recentCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final currentSong = audioState.currentSong;
-
-    if (currentSong == null) {
-      return GlassContainer(
-        blur: 24,
-        color: Colors.white.withValues(alpha: 0.05),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        borderRadius: BorderRadius.circular(28),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF00F0FF), Color(0xFFFF2D78)],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Start a session',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Search YouTube, explore local tracks, or reopen a recent favorite. Your next play is only one tap away.',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.68),
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                _HeroMetric(label: 'Local', value: '$localTrackCount'),
-                _HeroMetric(label: 'Favorites', value: '$favoritesCount'),
-                _HeroMetric(label: 'Recents', value: '$recentCount'),
-              ],
-            ),
-          ],
-        ),
-      );
-    }
-
-    return SongPaletteBuilder(
-      song: currentSong,
-      builder: (context, palette) => Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          gradient: LinearGradient(
-            colors: [
-              palette.primary.withValues(alpha: 0.42),
-              const Color(0xFF121027),
-              palette.secondary.withValues(alpha: 0.18),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: palette.glow,
-              blurRadius: 28,
-              offset: const Offset(0, 14),
-            ),
-          ],
-        ),
-        child: GlassContainer(
-          blur: 22,
-          color: Colors.black.withValues(alpha: 0.18),
-          border: Border.all(color: palette.primary.withValues(alpha: 0.2)),
-          borderRadius: BorderRadius.circular(30),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: palette.primary.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      audioState.isPlaying ? 'NOW PLAYING' : 'READY TO RESUME',
-                      style: TextStyle(
-                        color: palette.primary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.7,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    currentSong.isLocal ? 'Local session' : 'Streaming session',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.65),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Hero(
-                    tag: 'song-artwork-${currentSong.id}',
-                    child: SongArtwork(
-                      song: currentSong,
-                      size: 88,
-                      borderRadius: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          currentSong.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          currentSong.artist,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.72),
-                            fontSize: 14,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 14),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(999),
-                          child: LinearProgressIndicator(
-                            value: audioState.total.inMilliseconds == 0
-                                ? 0
-                                : (audioState.position.inMilliseconds /
-                                          audioState.total.inMilliseconds)
-                                      .clamp(0, 1)
-                                      .toDouble(),
-                            minHeight: 4,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.08,
-                            ),
-                            valueColor: AlwaysStoppedAnimation(
-                              palette.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _HeroMetric(label: 'Local', value: '$localTrackCount'),
-                  _HeroMetric(label: 'Favorites', value: '$favoritesCount'),
-                  _HeroMetric(label: 'Recents', value: '$recentCount'),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HeroMetric extends StatelessWidget {
-  const _HeroMetric({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 92,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.52),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.icon,
@@ -1074,20 +801,19 @@ class _SearchSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassContainer(
-      blur: 20,
-      color: Colors.white.withValues(alpha: 0.05),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      blur: 18,
+      color: Colors.white.withValues(alpha: 0.04),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       borderRadius: BorderRadius.circular(22),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFFFF2D78), Color(0xFFFF6B35)],
@@ -1114,7 +840,7 @@ class _SearchSection extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                'Tap a genre below',
+                'Quick search',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.35),
                   fontSize: 11,
@@ -1124,81 +850,90 @@ class _SearchSection extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          // Search input row
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color(0xFFFF2D78).withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 14),
-                Icon(
-                  Icons.search_rounded,
-                  color: const Color(0xFFFF2D78).withValues(alpha: 0.7),
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: controller,
-                    textInputAction: TextInputAction.search,
-                    onSubmitted: (_) => onSearch(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Artist, song, or playlist…',
-                      hintStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        fontSize: 14,
-                      ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
                     ),
                   ),
-                ),
-                GestureDetector(
-                  onTap: onSearch,
-                  child: Container(
-                    margin: const EdgeInsets.all(6),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF2D78), Color(0xFFFF6B35)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.search_rounded,
+                        color: Colors.white.withValues(alpha: 0.55),
+                        size: 20,
                       ),
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF2D78).withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: controller,
+                          textInputAction: TextInputAction.search,
+                          onSubmitted: (_) => onSearch(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Artist, song, or playlist',
+                            hintStyle: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.32),
+                              fontSize: 14,
+                            ),
+                            filled: false,
+                            fillColor: Colors.transparent,
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
-                    child: const Text(
-                      'Search',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              GestureDetector(
+                onTap: onSearch,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF2D78), Color(0xFFFF6B35)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF2D78).withValues(alpha: 0.28),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Text(
+                    'Search',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
 
